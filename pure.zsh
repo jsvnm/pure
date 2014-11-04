@@ -61,7 +61,8 @@ prompt_pure_preexec() {
 
 # string length ignoring ansi escapes
 prompt_pure_string_length() {
-	echo ${#${(S%%)1//(\%([KF1]|)\{*\}|\%[Bbkf])}}
+    local offset=${2:-0}
+    echo $(( ${#${(S%%)1//(\%([KF1]|)\{*\}|\%[Bbkf])}} + $offset ));
 }
 
 prompt_pure_precmd() {
@@ -71,7 +72,11 @@ prompt_pure_precmd() {
 	# git info
 	vcs_info
 
-	local prompt_pure_preprompt="\n%F{blue}$prompt_pure_username%F{green}$vcs_info_msg_0_`prompt_pure_git_dirty`%F{cyan} %~% %F{yellow}`prompt_pure_cmd_exec_time`%f"
+    # Phasers to uglify, see
+    # http://upload.wikimedia.org/wikipedia/en/1/15/Xterm_256color_chart.svg
+    local ppp1="\n%F{23}$prompt_pure_username%K{17}%F{195}$vcs_info_msg_0_`prompt_pure_git_dirty`"
+    local ppp2="%K{black}%F{209}%~%K{yellow}%F{black}`prompt_pure_cmd_exec_time`%f%k"
+	local prompt_pure_preprompt="$ppp1  $ppp2"  
 	print -P $prompt_pure_preprompt
 
 	# check async if there is anything to pull
@@ -87,7 +92,7 @@ prompt_pure_precmd() {
 			local arrows=''
 			(( $(command git rev-list --right-only --count HEAD...@'{u}' 2>/dev/null) > 0 )) && arrows='⇣'
 			(( $(command git rev-list --left-only --count HEAD...@'{u}' 2>/dev/null) > 0 )) && arrows+='⇡'
-			print -Pn "\e7\e[A\e[1G\e[`prompt_pure_string_length $prompt_pure_preprompt`C%F{cyan}${arrows}%f\e8"
+			print -Pn "\e7\e[A\e[1G\e[`prompt_pure_string_length $ppp1 -2`C%K{yellow}%F{black}${arrows}%f%k\e8"
 		}
 	} &!
 
